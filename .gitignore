@@ -1,0 +1,17 @@
+# Généré par XcodeGen à partir de project.yml — ne pas versionner
+*.xcodeproj/
+*.xcworkspace/
+
+# Build
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+
+# macOS
+.DS_Store

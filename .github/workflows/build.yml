@@ -1,0 +1,42 @@
+name: Build CalBalance (iOS Simulator)
+
+# Compile-check du projet sur une machine macOS gratuite fournie par GitHub,
+# sans certificat de signature (build simulateur uniquement). Suffisant pour
+# vérifier que le code compile après chaque modification, sans avoir de Mac.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: CalBalance
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Afficher la version de Xcode utilisée
+        run: xcodebuild -version
+
+      - name: Installer XcodeGen
+        run: brew install xcodegen
+
+      - name: Générer le projet Xcode
+        run: xcodegen generate
+
+      - name: Compiler pour le simulateur iOS
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project CalBalance.xcodeproj \
+            -scheme CalBalance \
+            -destination 'generic/platform=iOS Simulator' \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO
+        shell: bash
