@@ -99,7 +99,7 @@ struct ProfileView: View {
                     Text("L'objectif réel affiché sur le tableau de bord tient compte de votre activité mesurée par Apple Health.")
                 }
 
-                Section("Clé API Claude (analyse photo)") {
+                Section {
                     if settingsViewModel.apiKeySaved {
                         HStack {
                             Label("Clé API configurée", systemImage: "checkmark.circle.fill")
@@ -116,6 +116,8 @@ struct ProfileView: View {
                         }
                         .disabled(settingsViewModel.apiKeyInput.isEmpty)
                     }
+                } header: {
+                    Text("Clé API Claude (analyse photo)")
                 } footer: {
                     Text("Nécessaire pour l'analyse automatique des photos de repas. Obtenez une clé sur console.anthropic.com. Elle est stockée uniquement sur cet appareil (Keychain).")
                 }
