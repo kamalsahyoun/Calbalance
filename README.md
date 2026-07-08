@@ -43,7 +43,58 @@ git push -u origin main
 - **Pas de test réel HealthKit/caméra** : ces fonctionnalités nécessitent un simulateur interactif (HealthKit limité) ou un iPhone physique (caméra, vraies données Santé) — impossibles à valider uniquement via CI.
 - **Pas de build signé/IPA installable** pour l'instant : la génération d'un `.ipa` installable sur un iPhone ou publiable sur l'App Store nécessite un compte Apple Developer (99$/an) et des certificats de signature stockés en secrets GitHub. Dites-moi quand vous aurez ce compte et j'étendrai le workflow (avec `fastlane`) pour aller jusqu'à l'upload App Store Connect automatique, toujours sans Mac.
 
-Pour un vrai test interactif de l'app (voir l'écran, tester la caméra, HealthKit), la solution la plus proche d'un Mac reste un **Mac loué à distance** (MacinCloud, MacStadium, Scaleway Mac mini — quelques dizaines de dollars par mois ou à l'heure) : dites-le moi si vous voulez basculer sur cette option en complément.
+Pour un vrai test interactif de l'app (voir l'écran, tester la caméra, HealthKit), la solution la plus proche d'un Mac reste un **Mac loué à distance**, détaillée ci-dessous.
+
+## Mac loué à distance (pour voir et tester l'app pour de vrai)
+
+Cette option vous donne un vrai Xcode, un vrai simulateur interactif, et la possibilité d'installer l'app sur votre iPhone physique. Le point à bien comprendre avant de commencer : **l'iPhone doit être branché en USB à la machine qui fait tourner Xcode**. Un Mac loué à distance est physiquement ailleurs (dans un datacenter), donc il ne peut pas se connecter directement à votre iPhone en USB. Le contournement (détaillé à l'étape 5) consiste à construire un fichier `.ipa` sur le Mac distant, le télécharger sur votre PC Windows, puis l'installer sur votre iPhone via USB avec un outil qui tourne sous Windows (**Sideloadly**).
+
+### 1. Choisir un fournisseur
+
+| Fournisseur | Facturation | Remarque |
+|---|---|---|
+| **Scaleway Mac mini** | À l'heure (le moins cher pour un usage ponctuel) | Mac mini physique dédié, accès SSH + VNC. Nécessite un peu plus de manipulation réseau. |
+| **MacinCloud** | À l'heure ou abonnement mensuel | Interface web/client de bureau à distance clé en main, plus simple pour démarrer. |
+
+Vérifiez les tarifs actuels sur leurs sites (ils changent régulièrement) — pour un usage ponctuel (quelques heures pour configurer et tester), la facturation à l'heure est la plus économique. Je recommande de commencer par **MacinCloud** pour sa simplicité si c'est votre première fois.
+
+### 2. Se connecter et installer les outils
+
+1. Créez un compte et démarrez une instance/un serveur Mac.
+2. Connectez-vous via le client de bureau à distance fourni (souvent Microsoft Remote Desktop ou un client propriétaire).
+3. Sur le Mac distant, ouvrez le **Terminal** et installez Xcode (App Store) puis :
+   ```bash
+   xcode-select --install
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   brew install xcodegen
+   ```
+
+### 3. Récupérer et compiler le projet
+
+```bash
+git clone https://github.com/kamalsahyoun/Calbalance.git
+cd Calbalance
+xcodegen generate
+open CalBalance.xcodeproj
+```
+
+Dans Xcode : sélectionnez la cible **CalBalance** > onglet **Signing & Capabilities** > choisissez votre **Apple ID personnel** comme Team (gratuit, pas besoin du compte Developer payant pour tester). Xcode génère automatiquement un certificat de signature gratuit (valable 7 jours, à renouveler en recompilant).
+
+### 4. Tester sur le simulateur (immédiat, sans iPhone)
+
+Choisissez un simulateur dans la barre d'outils (ex. iPhone 15 Pro) et lancez avec `Cmd+R`. Vous verrez l'interface tourner en direct, pourrez naviguer entre les onglets, tester l'ajout de repas manuel, etc. **Limite du simulateur** : pas de vraies données Apple Santé, pas de vraie caméra (la photothèque simulée fonctionne pour tester le flux photo).
+
+### 5. Installer sur votre iPhone physique (depuis votre PC Windows)
+
+1. Sur le Mac distant, dans Xcode : **Product > Destination >** sélectionnez "Any iOS Device", puis **Product > Archive**.
+2. Une fois l'archive créée : **Distribute App > Development** (ou "Ad Hoc" si vous avez un compte Developer payant) **> Export**. Cela génère un fichier `.ipa`.
+3. Téléchargez ce `.ipa` depuis le Mac distant vers votre PC Windows (glisser-déposer via le client de bureau à distance, ou service cloud type Google Drive).
+4. Sur votre PC Windows, installez **[Sideloadly](https://sideloadly.io/)** (gratuit, tourne nativement sous Windows).
+5. Branchez votre iPhone en USB à votre PC Windows, ouvrez Sideloadly, glissez le `.ipa` dedans, connectez-vous avec votre Apple ID quand demandé, et cliquez sur Start.
+6. Sur l'iPhone : **Réglages > Général > VPN et gestion de l'appareil**, faites confiance au profil développeur associé à votre Apple ID.
+7. L'app CalBalance apparaît sur l'écran d'accueil, avec accès complet à Apple Santé, caméra, et notifications.
+
+**Limite du compte Apple ID gratuit** : l'app installée expire après 7 jours et doit être régénérée/réinstallée (répéter les étapes 1 à 6). Avec un compte Apple Developer payant (99$/an), la validité passe à 1 an et vous débloquez TestFlight (distribution simplifiée sans re-signer à chaque fois) ainsi que la publication App Store.
 
 ## Avec un Mac (si vous y avez accès plus tard)
 
